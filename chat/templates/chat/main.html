@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container mt-4">
+    <div class="jumbotron">
+      <h1 class="display-4">Welcome to "CHAT APP"</h1>
+      <p class="lead">Connect with friends and chat in real-time.</p>
+      <hr class="my-4">
+      <p>This is a simple and beautiful chat application.</p>
+      {% if request.user.is_authenticated %}
+      <a class="btn btn-primary btn-lg" href = {% url "index" %} role="button">Get Started</a>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

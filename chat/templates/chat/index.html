@@ -1,0 +1,53 @@
+<!-- index.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    Enter Chat Room
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <label for="existing_room" class="form-label">Select or enter a chat room:</label>
+                        <div class="input-group mb-3">
+                            <select name="existing_room" id="existing_room" class="form-control">
+                                <option value="" selected>None</option>
+                                {% for room in totalRooms %}
+                                    <option value="{{ room.name }}">{{ room.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <input name="new_room_name" id="room-name-input" type="text" class="form-control" placeholder="Enter room name" aria-label="Room Name" aria-describedby="room-name-submit">
+                            <button class="btn btn-primary" type="submit" id="room-name-submit">Enter</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.querySelector('#room-name-input').focus();
+
+    document.querySelector('#room-name-input').onkeyup = function(e) {
+        if (e.key === 'Enter') {
+            document.querySelector('#room-name-submit').click();
+        }
+    };
+
+    document.querySelector('#room-name-submit').onclick = function() {
+        var roomName = document.querySelector('#room-name-input').value;
+        if (roomName.trim() !== '') {
+            window.location.pathname = '/chat/' + roomName + '/';
+        } else {
+            alert('Please enter a valid room name.');
+        }
+    };
+</script>
+{% endblock %}
+
+

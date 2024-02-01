@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<section style="background-color: #eee; position:relative">
+    <div class="container py-5">
+
+        <div class="row d-flex justify-content-center">
+            <div class="col-md-8 col-lg-6 col-xl-4">
+
+                <div class="card" style="overflow: auto; position:realtive">
+                    <div class="card-header d-flex justify-content-between align-items-center p-3"
+                        style="border-top: 4px solid #ffa900;">
+                        <h5 class="mb-0">Chat messages in {{ room_name }}</h5>
+                        <div class="d-flex flex-row align-items-center">
+                            <span class="badge bg-warning me-3">20</span>
+                            <i class="fas fa-minus me-3 text-muted fa-xs"></i>
+                            <i class="fas fa-comments me-3 text-muted fa-xs"></i>
+                            <i class="fas fa-times text-muted fa-xs"></i>
+                        </div>
+                    </div>
+                    <div class="card-body" data-mdb-perfect-scrollbar="true"
+                        style="position: relative; height: 400px">
+                        <div id='chat-log'> <!-- Move id='chat-log' outside the loop -->
+                            {% for message in messages %} 
+                                {% if message.user != request.user %}
+                                    <div class="other-user-message">
+                                        <div class="d-flex justify-content-between">
+                                            <p class="small mb-1">{{message.user}}</p>
+                                            <p class="small mb-1 text-muted">{{message.timestamp}}</p>
+                                        </div>
+                                        <div class="d-flex flex-row justify-content-start">
+                                            <img
+                                            src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava5-bg.webp"
+                                            alt="avatar 1" style="width: 45px; height: 100%;">
+                                            <p class="chat-log small p-2 ms-3 mb-3 rounded-3"
+                                                    style="background-color: #f5f6f7;"> {{message.content}}
+                                            </p>
+                                           
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <div class="user-message">
+                                        <div class="d-flex justify-content-between">
+                                            <p class="small mb-1 text-muted">{{message.user }}</p>
+                                            <p class="small mb-1">{{message.timestamp}}</p>
+                                        </div>
+                                        <div class="d-flex flex-row justify-content-end mb-4 pt-1">
+                                            <p class="small p-2 me-3 mb-3 text-white rounded-3 bg-warning">{{message.content}}</p>
+                                            <img
+                                                src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava6-bg.webp"
+                                                alt="avatar 1" style="width: 45px; height: 100%;">
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <div class="card-footer text-muted d-flex justify-content-start align-items-center p-3" style="position:sticky; bottom:0; background:#f5f6f7">
+                            <div class="input-group mb-0">
+                                <input type="text" id="room-name-input" class="form-control" placeholder="Type message"
+                                    aria-label="Recipient's username" aria-describedby="button-addon2" />
+                                <button class="btn btn-warning" type="button" id="room-name-submit"
+                                    style="padding-top: .55rem;">
+                                    Button
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+
+{{ room_name |json_script:"room_name" }} 
+{{ username|json_script:"username" }}
+{{ timestamp |json_script:"timestamp" }}
+
+<script>
+    function scrollToBottom() {
+        let objDiv = document.getElementById("chat-log");
+        objDiv.scrollTop = objDiv.scrollHeight;
+    }
+    scrollToBottom();
+
+    console.log("room_name", room_name)
+
+    const roomName = JSON.parse(document.getElementById('room_name').textContent);
+    const userName = JSON.parse(document.getElementById("username").textContent);
+    const timeStamp = JSON.parse(document.getElementById("timestamp").textContent);
+
+    console.log("roomName", roomName);
+    const chatSocket = new WebSocket(
+        'ws://'
+        + window.location.host
+        + '/ws/chat/'
+        + roomName
+        + '/'
+    );
+
+    chatSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        console.log(data);
+
+       if (data.message) {
+        // Write a script to add the message to the chat log at the end of the page.
+        const chatLog = document.getElementById('chat-log');
+        const newMessageContainer = document.createElement('div');
+        newMessageContainer.className = data.username === userName ? 'user-message' : 'other-user-message';
+
+        const messageContentContainer = document.createElement('div');
+        messageContentContainer.className = 'd-flex justify-content-between';
+
+        const userNameMessageContent = document.createElement('p');
+        userNameMessageContent.className = data.username === userName ? 'small mb-1 text-muted' : 'small mb-1';
+        userNameMessageContent.textContent = data.username;
+
+        const timeStampMessageContent = document.createElement('p');
+        timeStampMessageContent.className = data.username === userName ? 'small mb-1' : 'small mb-1 text-muted';
+        timeStampMessageContent.textContent = timeStamp;
+
+        const thirdMessageContainer = document.createElement('div');
+        thirdMessageContainer.className = data.username === userName ? 'd-flex flex-row justify-content-end mb-4 pt-1' : 'd-flex flex-row justify-content-start';
+
+        const contentMessageConent = document.createElement('p');
+        contentMessageConent.className = data.username === userName ? 'small p-2 me-3 mb-3 text-white rounded-3 bg-warning' : 'chat-log small p-2 ms-3 mb-3 rounded-3';
+        contentMessageConent.textContent = data.message;
+
+        // Write a logic for img 
+        const imagMessageContent = document.createElement('img');
+        imagMessageContent.src = data.username === userName ? 'https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava6-bg.webp' : 'https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-chat/ava5-bg.webp';
+        imagMessageContent.alt = 'avatar 1';
+        imagMessageContent.style.width = '45px';
+        imagMessageContent.style.height = '100%';
+
+        userNameMessageContent.textContent = data.user;
+        timeStampMessageContent.textContent = timeStamp;
+
+        messageContentContainer.appendChild(userNameMessageContent);
+        messageContentContainer.appendChild(timeStampMessageContent);
+            //Check for Sender's message
+        if (data.username != userName) {
+
+            console.log("ENTER", data.user, userName)
+            
+            thirdMessageContainer.appendChild(imagMessageContent);
+            thirdMessageContainer.appendChild(contentMessageConent);
+
+        } else  // Receiver's message
+        {
+            console.log("ENTER2")
+            
+            thirdMessageContainer.appendChild(contentMessageConent);
+            thirdMessageContainer.appendChild(imagMessageContent);
+        }
+
+        newMessageContainer.appendChild(messageContentContainer);
+        newMessageContainer.appendChild(thirdMessageContainer);
+        chatLog.appendChild(newMessageContainer);
+
+        scrollToBottom();
+    } else {
+        alert('Empty messages are not allowed!');
+    }
+
+
+    
+    };
+
+    chatSocket.onclose = function(e) {
+        console.error('Chat socket closed unexpectedly');
+    };
+
+    document.querySelector('#room-name-input').focus();
+    document.querySelector('#room-name-input').onkeyup = function(e) {
+        if (e.key === 'Enter') {
+            document.querySelector('#room-name-submit').click();
+        }
+    };
+
+    document.querySelector('#room-name-submit').onclick = function(e) {
+        const messageInputDom = document.querySelector('#room-name-input');
+        const message = messageInputDom.value;
+        chatSocket.send(JSON.stringify({
+            'message': message,
+            'username': userName,
+            'room': roomName,
+            'timestamp': timeStamp,
+        }));
+        messageInputDom.value = '';
+    };
+</script>
+{% endblock %} 
